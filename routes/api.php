@@ -10,17 +10,31 @@ use App\Http\Controllers\AuthController;
 |--------------------------------------------------------------------------
 */
 
-// Test route
-Route::get('test', function() {
-    return ['message' => 'API is working'];
+// Public routes
+Route::get('/test', function () {
+    return response()->json([
+        'message' => 'API is working',
+        'status' => 'success'
+    ]);
 });
 
 // Auth routes
-Route::post('register', [AuthController::class, 'register']);
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    
+    // Protected auth routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/user', [AuthController::class, 'user']);
+    });
+});
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('user', function (Request $request) {
-        return $request->user();
+    Route::get('/user/profile', function (Request $request) {
+        return response()->json([
+            'user' => $request->user()
+        ]);
     });
 }); 

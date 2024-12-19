@@ -22,14 +22,18 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiting();
 
-        $this->routes(function () {
-            Route::middleware('api')
-                ->prefix('api')
-                ->group(base_path('routes/api.php'));
-
-            Route::middleware('web')
-                ->group(base_path('routes/web.php'));
+        // Simple test route to verify routing is working
+        Route::get('/test-direct', function() {
+            return response()->json(['message' => 'Direct route works']);
         });
+
+        // API Routes
+        Route::prefix('api')
+            ->group(base_path('routes/api.php'));
+
+        // Web Routes
+        Route::middleware('web')
+            ->group(base_path('routes/web.php'));
     }
 
     /**
