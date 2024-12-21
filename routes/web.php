@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
+use App\Http\Controllers\PolicyController;
+use App\Http\Controllers\TermsController;
 
 // Enhanced debug route
 Route::get('/debug-routes', function () {
@@ -45,8 +47,28 @@ Route::get('/test-web', function () {
 });
 
 Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/privacy-policy', [PolicyController::class, 'show']);
+Route::get('/terms', [TermsController::class, 'show']);
+
+// Add this temporary test route
+Route::get('/test-all-routes', function () {
     return response()->json([
-        'message' => 'Laravel API is running',
-        'version' => app()->version()
+        'status' => 'success',
+        'routes' => [
+            'home' => url('/'),
+            'privacy' => url('/privacy-policy'),
+            'terms' => url('/terms'),
+        ],
+        'views_exist' => [
+            'privacy_policy' => view()->exists('privacy-policy'),
+            'terms' => view()->exists('terms'),
+        ],
+        'controllers_exist' => [
+            'policy_controller' => class_exists('App\Http\Controllers\PolicyController'),
+            'terms_controller' => class_exists('App\Http\Controllers\TermsController'),
+        ]
     ]);
 });
