@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\FacebookAuthController;
 use App\Http\Controllers\BabyController;
+use App\Http\Controllers\GrowthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,5 +48,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/baby', [BabyController::class, 'show']);
     
     // Add any additional routes needed for the home screen
+});
+
+// Add new API endpoints
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('growth')->group(function () {
+        Route::post('/record', [GrowthController::class, 'store']);
+        Route::get('/history', [GrowthController::class, 'index']);
+        Route::get('/charts', [GrowthController::class, 'charts']);
+        Route::get('/percentiles', [GrowthController::class, 'getPercentiles']);
+        Route::get('/milestones', [GrowthController::class, 'getMilestones']);
+        Route::post('/milestones', [GrowthController::class, 'storeMilestone']);
+        Route::put('/milestones/{id}', [GrowthController::class, 'updateMilestone']);
+    });
 });
   
