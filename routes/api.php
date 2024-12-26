@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\FacebookAuthController;
+use App\Http\Controllers\BabyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,5 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
             'user' => $request->user()
         ]);
     });
+    Route::post('/baby', [BabyController::class, 'store']);
+    Route::get('/baby', [BabyController::class, 'show']);
 });
   
