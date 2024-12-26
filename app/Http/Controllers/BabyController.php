@@ -69,12 +69,24 @@ class BabyController extends Controller
 
     public function show()
     {
-        $baby = Baby::where('user_id', Auth::id())->first();
-        
-        if (!$baby) {
-            return response()->json(['message' => 'Baby not found'], 404);
-        }
+        try {
+            \Log::info('Fetching baby data for user:', ['user_id' => Auth::id()]);
+            
+            $baby = Baby::where('user_id', Auth::id())->first();
+            
+            if (!$baby) {
+                \Log::info('No baby found for user:', ['user_id' => Auth::id()]);
+                return response()->json(['message' => 'Baby not found'], 404);
+            }
 
-        return response()->json(['data' => $baby]);
+            \Log::info('Baby data found:', ['baby' => $baby]);
+            return response()->json(['data' => $baby]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching baby data:', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            return response()->json(['message' => 'Error fetching baby data'], 500);
+        }
     }
 } 

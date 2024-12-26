@@ -103,6 +103,10 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
+        \Log::info('User data being fetched:', [
+            'user' => $request->user()
+        ]);
+        
         return response()->json($request->user());
     }
 } 

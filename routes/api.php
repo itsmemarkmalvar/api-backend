@@ -45,5 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::post('/baby', [BabyController::class, 'store']);
     Route::get('/baby', [BabyController::class, 'show']);
+    
+    // Add any additional routes needed for the home screen
 });
   
