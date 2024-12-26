@@ -62,4 +62,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/milestones/{id}', [GrowthController::class, 'updateMilestone']);
     });
 });
+
+Route::post('/auth/login', [AuthController::class, 'login']);
   
