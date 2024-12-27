@@ -7,6 +7,7 @@ use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\FacebookAuthController;
 use App\Http\Controllers\BabyController;
 use App\Http\Controllers\GrowthController;
+use App\Http\Controllers\Auth\FacebookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,4 +65,6 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::post('/auth/login', [AuthController::class, 'login']);
+
+Route::post('/auth/facebook', [FacebookController::class, 'handleFacebookCallback']);
   
