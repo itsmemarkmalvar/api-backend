@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::post('/baby', [BabyController::class, 'store']);
     Route::get('/baby', [BabyController::class, 'show']);
+    Route::put('/baby', [BabyController::class, 'update']);
+    Route::post('/baby/upload-photo', [BabyController::class, 'uploadPhoto']);
     
     // Add any additional routes needed for the home screen
 });

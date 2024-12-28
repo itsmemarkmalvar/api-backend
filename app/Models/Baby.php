@@ -14,6 +14,7 @@ class Baby extends Model
         'height',
         'weight',
         'head_size',
+        'photo_url',
     ];
 
     protected $casts = [

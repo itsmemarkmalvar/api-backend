@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Baby;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class BabyController extends Controller
 {
@@ -79,7 +80,16 @@ class BabyController extends Controller
                 return response()->json(['message' => 'Baby not found'], 404);
             }
 
-            \Log::info('Baby data found:', ['baby' => $baby]);
+            // Clean up base64 data before sending
+            if ($baby->photo_url) {
+                $baby->photo_url = trim($baby->photo_url);
+            }
+
+            \Log::info('Baby data found:', [
+                'has_photo' => !empty($baby->photo_url),
+                'photo_length' => $baby->photo_url ? strlen($baby->photo_url) : 0
+            ]);
+            
             return response()->json(['data' => $baby]);
         } catch (\Exception $e) {
             \Log::error('Error fetching baby data:', [
@@ -87,6 +97,140 @@ class BabyController extends Controller
                 'user_id' => Auth::id()
             ]);
             return response()->json(['message' => 'Error fetching baby data'], 500);
+        }
+    }
+
+    public function uploadPhoto(Request $request)
+    {
+        try {
+            \Log::info('Photo upload attempt', [
+                'user_id' => Auth::id(),
+                'has_file' => $request->hasFile('photo'),
+                'content_type' => $request->header('Content-Type')
+            ]);
+
+            $request->validate([
+                'photo' => 'required|image|mimes:jpeg,png,jpg|max:5120'
+            ]);
+
+            $baby = Baby::where('user_id', Auth::id())->first();
+            if (!$baby) {
+                return response()->json(['message' => 'Baby not found'], 404);
+            }
+
+            if ($request->hasFile('photo')) {
+                try {
+                    $image = $request->file('photo');
+                    
+                    // Log image details
+                    \Log::info('Processing image:', [
+                        'original_name' => $image->getClientOriginalName(),
+                        'mime_type' => $image->getMimeType(),
+                        'size' => $image->getSize()
+                    ]);
+
+                    // Read image content
+                    $imageContent = file_get_contents($image);
+                    if ($imageContent === false) {
+                        throw new \Exception('Failed to read image content');
+                    }
+
+                    // Convert to base64 and clean the string
+                    $imageData = base64_encode($imageContent);
+                    if (!$imageData) {
+                        throw new \Exception('Failed to encode image to base64');
+                    }
+
+                    // Create and clean the base64 image string
+                    $base64Image = 'data:' . $image->getMimeType() . ';base64,' . $imageData;
+                    $base64Image = trim($base64Image); // Remove any whitespace
+                    
+                    // Store base64 string in database
+                    $baby->photo_url = $base64Image;
+                    $baby->save();
+
+                    // Verify stored data
+                    $baby->refresh();
+                    \Log::info('Photo stored successfully', [
+                        'baby_id' => $baby->id,
+                        'stored_length' => strlen($baby->photo_url),
+                        'starts_with' => substr($baby->photo_url, 0, 30)
+                    ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Photo uploaded successfully',
+                        'photo_url' => $baby->photo_url
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Error processing image:', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    return response()->json([
+                        'message' => 'Error processing image',
+                        'error' => $e->getMessage()
+                    ], 500);
+                }
+            }
+
+            return response()->json(['message' => 'No photo file received'], 400);
+        } catch (\Exception $e) {
+            \Log::error('Error in upload process:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Error uploading photo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function update(Request $request)
+    {
+        try {
+            \Log::info('Baby data update attempt', [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all()
+            ]);
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'gender' => 'required|in:male,female',
+                'birth_date' => 'required|date|before_or_equal:today',
+                'height' => 'required|numeric|between:20,120',
+                'weight' => 'required|numeric|between:1,30',
+                'head_size' => 'required|numeric|between:20,60',
+            ]);
+
+            $baby = Baby::where('user_id', Auth::id())->first();
+            
+            if (!$baby) {
+                return response()->json(['message' => 'Baby not found'], 404);
+            }
+
+            $baby->update($validated);
+
+            \Log::info('Baby data updated successfully', [
+                'baby_id' => $baby->id,
+                'updated_fields' => array_keys($validated)
+            ]);
+
+            return response()->json([
+                'message' => 'Baby information updated successfully',
+                'data' => $baby
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating baby data', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Error updating baby information',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 } 
