@@ -80,14 +80,39 @@ class BabyController extends Controller
                 return response()->json(['message' => 'Baby not found'], 404);
             }
 
-            // Clean up base64 data before sending
+            // Clean and validate base64 data before sending
             if ($baby->photo_url) {
-                $baby->photo_url = trim($baby->photo_url);
+                try {
+                    // Extract the base64 part
+                    if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $baby->photo_url, $matches)) {
+                        $imageType = $matches[1];
+                        $base64Data = $matches[2];
+                        
+                        // Validate base64 data
+                        if (base64_decode($base64Data, true) === false) {
+                            \Log::error('Invalid base64 data detected, removing photo_url');
+                            $baby->photo_url = null;
+                            $baby->save();
+                        }
+                    } else {
+                        \Log::error('Invalid image format detected, removing photo_url');
+                        $baby->photo_url = null;
+                        $baby->save();
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error processing photo_url:', [
+                        'error' => $e->getMessage(),
+                        'photo_url_length' => strlen($baby->photo_url)
+                    ]);
+                    $baby->photo_url = null;
+                    $baby->save();
+                }
             }
 
             \Log::info('Baby data found:', [
                 'has_photo' => !empty($baby->photo_url),
-                'photo_length' => $baby->photo_url ? strlen($baby->photo_url) : 0
+                'photo_length' => $baby->photo_url ? strlen($baby->photo_url) : 0,
+                'photo_prefix' => $baby->photo_url ? substr($baby->photo_url, 0, 30) : null
             ]);
             
             return response()->json(['data' => $baby]);
@@ -129,21 +154,26 @@ class BabyController extends Controller
                         'size' => $image->getSize()
                     ]);
 
-                    // Read image content
-                    $imageContent = file_get_contents($image);
+                    // Read and encode image content
+                    $imageContent = file_get_contents($image->getRealPath());
                     if ($imageContent === false) {
                         throw new \Exception('Failed to read image content');
                     }
 
-                    // Convert to base64 and clean the string
+                    // Clean and encode the image data
                     $imageData = base64_encode($imageContent);
-                    if (!$imageData) {
+                    if (empty($imageData)) {
                         throw new \Exception('Failed to encode image to base64');
                     }
 
-                    // Create and clean the base64 image string
-                    $base64Image = 'data:' . $image->getMimeType() . ';base64,' . $imageData;
-                    $base64Image = trim($base64Image); // Remove any whitespace
+                    // Create a clean base64 image string
+                    $mimeType = $image->getMimeType();
+                    $base64Image = "data:{$mimeType};base64,{$imageData}";
+
+                    // Verify the base64 string is valid
+                    if (preg_match('/^data:image\/(\w+);base64,/', $base64Image) !== 1) {
+                        throw new \Exception('Invalid base64 image format');
+                    }
                     
                     // Store base64 string in database
                     $baby->photo_url = $base64Image;
@@ -154,11 +184,11 @@ class BabyController extends Controller
                     \Log::info('Photo stored successfully', [
                         'baby_id' => $baby->id,
                         'stored_length' => strlen($baby->photo_url),
-                        'starts_with' => substr($baby->photo_url, 0, 30)
+                        'mime_type' => $mimeType,
+                        'base64_prefix' => substr($base64Image, 0, 50)
                     ]);
 
                     return response()->json([
-                        'success' => true,
                         'message' => 'Photo uploaded successfully',
                         'photo_url' => $baby->photo_url
                     ]);
@@ -168,8 +198,7 @@ class BabyController extends Controller
                         'trace' => $e->getTraceAsString()
                     ]);
                     return response()->json([
-                        'message' => 'Error processing image',
-                        'error' => $e->getMessage()
+                        'message' => 'Error processing image: ' . $e->getMessage()
                     ], 500);
                 }
             }
@@ -181,8 +210,7 @@ class BabyController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return response()->json([
-                'message' => 'Error uploading photo',
-                'error' => $e->getMessage()
+                'message' => 'Error uploading photo: ' . $e->getMessage()
             ], 500);
         }
     }
