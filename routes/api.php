@@ -69,4 +69,10 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::post('/auth/facebook', [FacebookController::class, 'handleFacebookCallback']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::put('/auth/user/update', [AuthController::class, 'updateProfile']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+});
   
