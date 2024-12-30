@@ -218,7 +218,7 @@ class BabyController extends Controller
     public function update(Request $request)
     {
         try {
-            \Log::info('Baby data update attempt', [
+            \Log::info('Baby profile update attempt', [
                 'user_id' => Auth::id(),
                 'request_data' => $request->all()
             ]);
@@ -227,9 +227,6 @@ class BabyController extends Controller
                 'name' => 'required|string|max:255',
                 'gender' => 'required|in:male,female',
                 'birth_date' => 'required|date|before_or_equal:today',
-                'height' => 'required|numeric|between:20,120',
-                'weight' => 'required|numeric|between:1,30',
-                'head_size' => 'required|numeric|between:20,60',
             ]);
 
             $baby = Baby::where('user_id', Auth::id())->first();
@@ -240,7 +237,7 @@ class BabyController extends Controller
 
             $baby->update($validated);
 
-            \Log::info('Baby data updated successfully', [
+            \Log::info('Baby profile updated successfully', [
                 'baby_id' => $baby->id,
                 'updated_fields' => array_keys($validated)
             ]);
@@ -250,7 +247,7 @@ class BabyController extends Controller
                 'data' => $baby
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error updating baby data', [
+            \Log::error('Error updating baby profile', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
