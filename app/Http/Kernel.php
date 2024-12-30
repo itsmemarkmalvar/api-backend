@@ -65,3 +65,4 @@ class Kernel extends HttpKernel
         'cors' => \App\Http\Middleware\Cors::class,
     ];
 } 
+
