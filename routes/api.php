@@ -8,6 +8,7 @@ use App\Http\Controllers\FacebookAuthController;
 use App\Http\Controllers\BabyController;
 use App\Http\Controllers\GrowthController;
 use App\Http\Controllers\Auth\FacebookController;
+use App\Http\Controllers\MilestoneController;
 
 /*
 |--------------------------------------------------------------------------
@@ -74,5 +75,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/auth/user/update', [AuthController::class, 'updateProfile']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+});
+
+// Milestone routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/milestones/{babyId}', [MilestoneController::class, 'index']);
+    Route::post('/milestones/{babyId}/{milestoneId}/toggle', [MilestoneController::class, 'toggle']);
+    Route::post('/milestones/{babyId}/initialize', [MilestoneController::class, 'initializeMilestones']);
 });
   
