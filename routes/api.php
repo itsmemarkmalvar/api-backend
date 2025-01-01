@@ -111,7 +111,7 @@ Route::middleware(['auth:sanctum', 'verified', \App\Http\Middleware\AttachBabyTo
 });
 
 // Medicine routes
-Route::middleware(['auth:sanctum', 'verified', 'attach.baby'])->group(function () {
+Route::middleware(['auth:sanctum', 'verified', \App\Http\Middleware\AttachBabyToRequest::class])->group(function () {
     // Medicine CRUD
     Route::get('/medicines', [MedicineController::class, 'index']);
     Route::post('/medicines', [MedicineController::class, 'store']);
