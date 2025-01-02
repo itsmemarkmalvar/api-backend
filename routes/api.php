@@ -18,6 +18,7 @@ use App\Http\Controllers\DoctorVisitController;
 use App\Http\Controllers\HealthRecordController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\SymptomController;
+use App\Http\Controllers\DevelopmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -169,5 +170,12 @@ Route::middleware(['auth:sanctum', 'verified', \App\Http\Middleware\AttachBabyTo
     Route::put('/symptoms/{id}', [SymptomController::class, 'update']);
     Route::delete('/symptoms/{id}', [SymptomController::class, 'destroy']);
     Route::get('/symptoms/{id}/trends', [SymptomController::class, 'getTrends']);
+});
+
+// Development routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/development/activities', [DevelopmentController::class, 'getActivities']);
+    Route::get('/development/tips', [DevelopmentController::class, 'getDevelopmentTips']);
+    Route::post('/development/track-activity', [DevelopmentController::class, 'trackActivity']);
 });
   
