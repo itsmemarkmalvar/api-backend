@@ -14,6 +14,10 @@ use App\Http\Controllers\SleepController;
 use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\MedicineScheduleController;
 use App\Http\Controllers\MedicineLogController;
+use App\Http\Controllers\DoctorVisitController;
+use App\Http\Controllers\HealthRecordController;
+use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\SymptomController;
 
 /*
 |--------------------------------------------------------------------------
@@ -132,5 +136,38 @@ Route::middleware(['auth:sanctum', 'verified', \App\Http\Middleware\AttachBabyTo
     Route::put('/medicines/{medicineId}/logs/{id}', [MedicineLogController::class, 'update']);
     Route::delete('/medicines/{medicineId}/logs/{id}', [MedicineLogController::class, 'destroy']);
     Route::get('/medicines/{medicineId}/stats', [MedicineLogController::class, 'getStats']);
+});
+
+// Health Records Routes
+Route::middleware(['auth:sanctum', 'verified', \App\Http\Middleware\AttachBabyToRequest::class])->group(function () {
+    // Doctor Visits
+    Route::get('/doctor-visits', [DoctorVisitController::class, 'index']);
+    Route::post('/doctor-visits', [DoctorVisitController::class, 'store']);
+    Route::get('/doctor-visits/{id}', [DoctorVisitController::class, 'show']);
+    Route::put('/doctor-visits/{id}', [DoctorVisitController::class, 'update']);
+    Route::delete('/doctor-visits/{id}', [DoctorVisitController::class, 'destroy']);
+
+    // Health Records
+    Route::get('/health-records', [HealthRecordController::class, 'index']);
+    Route::post('/health-records', [HealthRecordController::class, 'store']);
+    Route::get('/health-records/{id}', [HealthRecordController::class, 'show']);
+    Route::put('/health-records/{id}', [HealthRecordController::class, 'update']);
+    Route::delete('/health-records/{id}', [HealthRecordController::class, 'destroy']);
+
+    // Appointments
+    Route::get('/appointments', [AppointmentController::class, 'index']);
+    Route::post('/appointments', [AppointmentController::class, 'store']);
+    Route::get('/appointments/upcoming', [AppointmentController::class, 'getUpcoming']);
+    Route::get('/appointments/{id}', [AppointmentController::class, 'show']);
+    Route::put('/appointments/{id}', [AppointmentController::class, 'update']);
+    Route::delete('/appointments/{id}', [AppointmentController::class, 'destroy']);
+
+    // Symptoms
+    Route::get('/symptoms', [SymptomController::class, 'index']);
+    Route::post('/symptoms', [SymptomController::class, 'store']);
+    Route::get('/symptoms/{id}', [SymptomController::class, 'show']);
+    Route::put('/symptoms/{id}', [SymptomController::class, 'update']);
+    Route::delete('/symptoms/{id}', [SymptomController::class, 'destroy']);
+    Route::get('/symptoms/{id}/trends', [SymptomController::class, 'getTrends']);
 });
   
