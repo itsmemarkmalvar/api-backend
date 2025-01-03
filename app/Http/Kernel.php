@@ -48,6 +48,8 @@ class Kernel extends HttpKernel
     /**
      * The application's middleware aliases.
      *
+     * Aliases may be used instead of class names to conveniently assign middleware to routes and groups.
+     *
      * @var array<string, class-string|string>
      */
     protected $middlewareAliases = [
@@ -64,6 +66,7 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'cors' => \App\Http\Middleware\Cors::class,
         'attach.baby' => \App\Http\Middleware\AttachBabyToRequest::class,
+        'hasBaby' => \App\Http\Middleware\HasBaby::class,
     ];
 } 
 

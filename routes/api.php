@@ -19,6 +19,7 @@ use App\Http\Controllers\HealthRecordController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\SymptomController;
 use App\Http\Controllers\DevelopmentController;
+use App\Http\Controllers\DiaperController;
 
 /*
 |--------------------------------------------------------------------------
@@ -177,5 +178,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/development/activities', [DevelopmentController::class, 'getActivities']);
     Route::get('/development/tips', [DevelopmentController::class, 'getDevelopmentTips']);
     Route::post('/development/track-activity', [DevelopmentController::class, 'trackActivity']);
+});
+
+// Diaper Logs Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('diaper-logs')->group(function () {
+        Route::get('/stats', [DiaperController::class, 'getStats']);
+        Route::get('/{id}', [DiaperController::class, 'show']);
+        Route::put('/{id}', [DiaperController::class, 'update']);
+        Route::delete('/{id}', [DiaperController::class, 'destroy']);
+        Route::get('/', [DiaperController::class, 'index']);
+        Route::post('/', [DiaperController::class, 'store']);
+    });
 });
   
