@@ -102,6 +102,11 @@ class AuthController extends Controller
         try {
             $user = $request->user();
             
+            \Log::info('Profile update request:', [
+                'all_data' => $request->all(),
+                'user_id' => $user->id
+            ]);
+            
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|string|max:255',
                 'phone_number' => 'sometimes|string|max:11',
@@ -115,6 +120,9 @@ class AuthController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('Validation failed:', [
+                    'errors' => $validator->errors()->toArray()
+                ]);
                 return response()->json([
                     'message' => 'Validation failed',
                     'errors' => $validator->errors()
@@ -126,7 +134,15 @@ class AuthController extends Controller
                 return $value !== null;
             });
 
+            \Log::info('Validated data:', [
+                'data' => $validatedData
+            ]);
+
             $user->update($validatedData);
+
+            \Log::info('User updated:', [
+                'user' => $user->toArray()
+            ]);
 
             return response()->json([
                 'message' => 'Profile updated successfully',
