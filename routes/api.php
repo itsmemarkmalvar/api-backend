@@ -20,6 +20,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\SymptomController;
 use App\Http\Controllers\DevelopmentController;
 use App\Http\Controllers\DiaperController;
+use App\Http\Controllers\VaccinationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -189,6 +190,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [DiaperController::class, 'destroy']);
         Route::get('/', [DiaperController::class, 'index']);
         Route::post('/', [DiaperController::class, 'store']);
+    });
+});
+
+// Vaccination routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::prefix('vaccinations')->group(function () {
+        Route::get('/', [VaccinationController::class, 'index']);                    // Get master list with completion status
+        Route::post('/mark-completed', [VaccinationController::class, 'markAsCompleted']); // Mark vaccine as completed
+        Route::get('/history', [VaccinationController::class, 'getVaccinationHistory']);  // Get vaccination history
+        Route::post('/schedule', [VaccinationController::class, 'schedule']);        // Schedule a vaccine
     });
 });
   
