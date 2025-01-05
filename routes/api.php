@@ -202,4 +202,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/schedule', [VaccinationController::class, 'schedule']);        // Schedule a vaccine
     });
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Vaccination routes
+    Route::get('/vaccinations', [VaccinationController::class, 'index']);
+    Route::post('/vaccinations/schedule', [VaccinationController::class, 'schedule']);
+    Route::post('/vaccinations/complete', [VaccinationController::class, 'markAsCompleted']);
+    Route::get('/vaccinations/history', [VaccinationController::class, 'getVaccinationHistory']);
+    Route::get('/vaccinations/schedule/pdf', [VaccinationController::class, 'generateSchedulePDF']);
+});
   

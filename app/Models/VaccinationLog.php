@@ -15,6 +15,8 @@ class VaccinationLog extends Model
         'vaccine_id',
         'vaccine_name',
         'age_group',
+        'status',
+        'scheduled_date',
         'given_at',
         'administered_by',
         'administered_at',
@@ -23,6 +25,7 @@ class VaccinationLog extends Model
 
     protected $casts = [
         'given_at' => 'datetime',
+        'scheduled_date' => 'datetime',
     ];
 
     /**

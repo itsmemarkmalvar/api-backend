@@ -7,6 +7,7 @@ use App\Models\VaccinationLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use PDF;
 
 class VaccinationController extends Controller
 {
@@ -249,6 +250,53 @@ class VaccinationController extends Controller
                 'request' => $request->all()
             ]);
             return response()->json(['message' => 'Failed to schedule vaccination'], 500);
+        }
+    }
+
+    public function generateSchedulePDF(Request $request)
+    {
+        try {
+            $user = $request->user();
+            $baby = $user->baby;
+
+            if (!$baby) {
+                return response()->json(['error' => 'Baby information not found'], 404);
+            }
+
+            // Get all vaccinations for the baby
+            $vaccinations = Vaccination::where('baby_id', $baby->id)
+                ->orderBy('date', 'asc')
+                ->get();
+
+            // Group vaccinations by status
+            $completed = $vaccinations->where('status', 'completed');
+            $scheduled = $vaccinations->where('status', 'scheduled');
+
+            // Generate HTML content
+            $html = view('pdf.vaccination_schedule', [
+                'baby' => $baby,
+                'completed' => $completed,
+                'scheduled' => $scheduled,
+                'generatedDate' => now()->format('F d, Y')
+            ])->render();
+
+            // Generate PDF
+            $pdf = PDF::loadHTML($html);
+            
+            // Generate a unique filename
+            $filename = 'vaccination_schedule_' . $baby->id . '_' . now()->format('Ymd_His') . '.pdf';
+            
+            // Save PDF temporarily
+            $tempPath = storage_path('app/public/temp/' . $filename);
+            $pdf->save($tempPath);
+
+            return response()->json([
+                'message' => 'PDF generated successfully',
+                'filename' => $filename,
+                'url' => url('storage/temp/' . $filename)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
         }
     }
 } 
