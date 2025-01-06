@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\TermsController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use Illuminate\Support\Facades\Hash;
 
 // Enhanced debug route
 Route::get('/debug-routes', function () {
@@ -70,5 +73,20 @@ Route::get('/test-all-routes', function () {
             'policy_controller' => class_exists('App\Http\Controllers\PolicyController'),
             'terms_controller' => class_exists('App\Http\Controllers\TermsController'),
         ]
+    ]);
+});
+
+// Password Reset Routes
+Route::get('password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])
+    ->name('password.reset');
+Route::post('password/reset', [ResetPasswordController::class, 'reset'])
+    ->name('password.update');
+Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])
+    ->name('password.email');
+
+// Add a route to handle direct token verification
+Route::get('password/verify/{token}', function($token) {
+    return response()->json([
+        'valid' => \DB::table('password_reset_tokens')->where('token', Hash::make($token))->exists()
     ]);
 });
