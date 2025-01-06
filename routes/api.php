@@ -46,6 +46,8 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/user', [AuthController::class, 'user']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
+        Route::post('/delete-account', [AuthController::class, 'deleteAccount']);
     });
 
     Route::post('google', [GoogleAuthController::class, 'handleGoogleSignIn']);

@@ -160,4 +160,85 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    public function changePassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|different:current_password',
+                'new_password_confirmation' => 'required|string|same:new_password',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $user = $request->user();
+
+            // Verify current password
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'message' => 'Current password is incorrect'
+                ], 422);
+            }
+
+            // Update password
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return response()->json([
+                'message' => 'Password changed successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to change password',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Verify password before deletion
+            $validator = Validator::make($request->all(), [
+                'password' => 'required|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Verify the password
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'message' => 'Password is incorrect'
+                ], 422);
+            }
+
+            // Delete user's tokens
+            $user->tokens()->delete();
+            
+            // Delete the user
+            $user->delete();
+
+            return response()->json([
+                'message' => 'Account deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to delete account',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 } 
