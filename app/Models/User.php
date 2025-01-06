@@ -53,4 +53,12 @@ class User extends Authenticatable
         'password' => 'hashed',
         'birthday' => 'date',
     ];
+
+    /**
+     * Get the baby associated with the user.
+     */
+    public function baby()
+    {
+        return $this->hasOne(Baby::class);
+    }
 }

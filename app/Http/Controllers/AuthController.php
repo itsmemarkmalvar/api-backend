@@ -206,6 +206,11 @@ class AuthController extends Controller
         try {
             $user = $request->user();
             
+            // Store IDs for logging before deletion
+            $userId = $user->id;
+            $userEmail = $user->email;
+            $babyId = $user->baby ? $user->baby->id : null;
+            
             // Verify password before deletion
             $validator = Validator::make($request->all(), [
                 'password' => 'required|string'
@@ -225,19 +230,67 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            // Delete user's tokens
-            $user->tokens()->delete();
-            
-            // Delete the user
-            $user->delete();
-
-            return response()->json([
-                'message' => 'Account deleted successfully'
+            \Log::info('Starting account deletion process for user:', [
+                'user_id' => $userId,
+                'email' => $userEmail
             ]);
+
+            try {
+                // Delete tokens first
+                $user->tokens()->delete();
+                \Log::info('User tokens deleted', ['user_id' => $userId]);
+
+                // Delete baby and related records if they exist
+                if ($babyId) {
+                    \Log::info('Deleting baby and related records', ['baby_id' => $babyId]);
+                    
+                    // Delete related records in order
+                    \DB::table('growth_records')->where('baby_id', $babyId)->delete();
+                    \DB::table('milestones')->where('baby_id', $babyId)->delete();
+                    \DB::table('sleep_logs')->where('baby_id', $babyId)->delete();
+                    \DB::table('feeding_logs')->where('baby_id', $babyId)->delete();
+                    \DB::table('health_records')->where('baby_id', $babyId)->delete();
+                    \DB::table('vaccinations')->where('baby_id', $babyId)->delete();
+                    \DB::table('vaccination_logs')->where('baby_id', $babyId)->delete();
+                    
+                    // Delete the baby record
+                    \DB::table('babies')->where('id', $babyId)->delete();
+                    \Log::info('Baby and related records deleted', ['baby_id' => $babyId]);
+                }
+
+                // Finally delete the user
+                \DB::table('users')->where('id', $userId)->delete();
+                \Log::info('User deleted', ['user_id' => $userId]);
+
+                \Log::info('Account deletion completed successfully', [
+                    'user_id' => $userId,
+                    'baby_id' => $babyId
+                ]);
+
+                return response()->json([
+                    'message' => 'Account deleted successfully'
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error during account deletion:', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                return response()->json([
+                    'message' => 'Failed to delete account',
+                    'error' => 'An unexpected error occurred. Please try again.'
+                ], 500);
+            }
         } catch (\Exception $e) {
+            \Log::error('Account deletion failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'message' => 'Failed to delete account',
-                'error' => $e->getMessage()
+                'error' => 'An unexpected error occurred. Please try again.'
             ], 500);
         }
     }
