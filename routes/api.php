@@ -54,6 +54,12 @@ Route::prefix('auth')->group(function () {
     Route::post('facebook', [FacebookAuthController::class, 'handleFacebookSignIn']);
 });
 
+// Email verification routes
+Route::post('/auth/resend-verification-email', [AuthController::class, 'resendVerificationEmail']);
+Route::get('/auth/check-verification/{email}', [AuthController::class, 'checkVerification']);
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->name('verification.verify');
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/profile', function (Request $request) {

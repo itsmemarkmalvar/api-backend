@@ -34,12 +34,13 @@ class AuthController extends Controller
                 'phone_number' => $request->phone_number ?? null,
             ]);
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            // Send verification email
+            $user->sendEmailVerificationNotification();
 
             return response()->json([
-                'message' => 'Registration successful',
+                'message' => 'Registration successful. Please check your email for verification.',
                 'user' => $user,
-                'token' => $token,
+                'requires_verification' => true
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -58,6 +59,15 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
+            
+            // Check if email is verified
+            if (!$user->hasVerifiedEmail()) {
+                return response()->json([
+                    'message' => 'Please verify your email first.',
+                    'requires_verification' => true
+                ], 403);
+            }
+
             $token = $user->createToken('auth-token')->plainTextToken;
 
             return response()->json([
@@ -293,5 +303,78 @@ class AuthController extends Controller
                 'error' => 'An unexpected error occurred. Please try again.'
             ], 500);
         }
+    }
+
+    public function resendVerificationEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Email already verified.'
+            ], 400);
+        }
+
+        try {
+            $user->sendEmailVerificationNotification();
+            \Log::info('Verification email sent to: ' . $user->email);
+
+            return response()->json([
+                'message' => 'Verification email sent successfully!'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send verification email: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to send verification email',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function checkVerification($email)
+    {
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+                'verified' => false
+            ], 404);
+        }
+
+        return response()->json([
+            'verified' => !is_null($user->email_verified_at)
+        ]);
+    }
+
+    public function verifyEmail(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Email already verified.'
+            ], 400);
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new \Illuminate\Auth\Events\Verified($user));
+            
+            // Generate token after verification
+            $token = $user->createToken('auth-token')->plainTextToken;
+            
+            return response()->json([
+                'message' => 'Email has been verified.',
+                'token' => $token
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Invalid verification link.'
+        ], 400);
     }
 } 
