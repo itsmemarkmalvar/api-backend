@@ -53,18 +53,43 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email',
+                'password' => 'required|min:8'
+            ], [
+                'email.required' => 'Email is required',
+                'email.email' => 'Please enter a valid email address',
+                'email.exists' => 'No account found with this email',
+                'password.required' => 'Password is required',
+                'password.min' => 'Password must be at least 8 characters'
+            ]);
 
-        if (Auth::attempt($credentials)) {
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+                return response()->json([
+                    'message' => 'Invalid credentials',
+                    'errors' => [
+                        'password' => ['The password you entered is incorrect']
+                    ]
+                ], 401);
+            }
+
             $user = Auth::user();
             
             // Check if email is verified
             if (!$user->hasVerifiedEmail()) {
                 return response()->json([
-                    'message' => 'Please verify your email first.',
+                    'message' => 'Email not verified',
+                    'errors' => [
+                        'email' => ['Please verify your email first']
+                    ],
                     'requires_verification' => true
                 ], 403);
             }
@@ -72,16 +97,20 @@ class AuthController extends Controller
             $token = $user->createToken('auth-token')->plainTextToken;
 
             return response()->json([
-                'success' => true,
                 'token' => $token,
                 'user' => $user
             ], 200);
+        } catch (\Exception $e) {
+            \Log::error('Login error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'message' => 'Server error occurred',
+                'errors' => ['server' => ['An unexpected error occurred. Please try again later.']]
+            ], 500);
         }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid credentials'
-        ], 401);
     }
 
     public function logout(Request $request)
