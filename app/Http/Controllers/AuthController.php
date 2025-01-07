@@ -386,9 +386,12 @@ class AuthController extends Controller
         $user = User::findOrFail($id);
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json([
-                'message' => 'Email already verified.'
-            ], 400);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Email already verified.'
+                ], 400);
+            }
+            return view('auth.verify-success');
         }
 
         if ($user->markEmailAsVerified()) {
@@ -397,15 +400,23 @@ class AuthController extends Controller
             // Generate token after verification
             $token = $user->createToken('auth-token')->plainTextToken;
             
-            return response()->json([
-                'message' => 'Email has been verified.',
-                'token' => $token
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Email has been verified.',
+                    'token' => $token
+                ]);
+            }
+            
+            return view('auth.verify-success');
         }
 
-        return response()->json([
-            'message' => 'Invalid verification link.'
-        ], 400);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Invalid verification link.'
+            ], 400);
+        }
+        
+        return redirect()->route('login')->with('error', 'Invalid verification link.');
     }
 
     public function forgotPassword(Request $request)
