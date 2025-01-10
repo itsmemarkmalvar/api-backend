@@ -112,7 +112,8 @@ class GrowthController extends Controller
                         'date' => $record->date_recorded,
                         'height' => $record->height,
                         'weight' => $record->weight,
-                        'head_size' => $record->head_size
+                        'head_size' => $record->head_size,
+                        'notes' => $record->notes
                     ];
                 });
 
