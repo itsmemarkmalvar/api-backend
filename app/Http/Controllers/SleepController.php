@@ -79,11 +79,38 @@ class SleepController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $sleepLog = new SleepLog($request->all());
-        $sleepLog->baby_id = $request->baby->id;
-        $sleepLog->save();
+        try {
+            // Ensure times are treated as UTC
+            $startTime = Carbon::parse($request->start_time)->setTimezone('UTC');
+            $endTime = $request->end_time ? Carbon::parse($request->end_time)->setTimezone('UTC') : null;
 
-        return response()->json($sleepLog, 201);
+            $sleepLog = new SleepLog([
+                ...$request->except(['start_time', 'end_time']),
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'baby_id' => $request->baby->id
+            ]);
+
+            // Log the times for debugging
+            \Log::info('Creating sleep log:', [
+                'original_start' => $request->start_time,
+                'original_end' => $request->end_time,
+                'utc_start' => $startTime->toDateTimeString(),
+                'utc_end' => $endTime ? $endTime->toDateTimeString() : null
+            ]);
+
+            $sleepLog->save();
+
+            return response()->json($sleepLog, 201);
+        } catch (\Exception $e) {
+            \Log::error('Error creating sleep log: ' . $e->getMessage(), [
+                'request_data' => $request->all()
+            ]);
+            return response()->json([
+                'error' => 'Failed to create sleep log',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function show(Request $request, $id)
@@ -107,10 +134,40 @@ class SleepController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $sleepLog = SleepLog::forBaby($request->baby->id)->findOrFail($id);
-        $sleepLog->update($request->all());
+        try {
+            $sleepLog = SleepLog::forBaby($request->baby->id)->findOrFail($id);
 
-        return response()->json($sleepLog);
+            // Ensure times are treated as UTC
+            $data = $request->all();
+            if (isset($data['start_time'])) {
+                $data['start_time'] = Carbon::parse($data['start_time'])->setTimezone('UTC');
+            }
+            if (isset($data['end_time'])) {
+                $data['end_time'] = Carbon::parse($data['end_time'])->setTimezone('UTC');
+            }
+
+            // Log the times for debugging
+            \Log::info('Updating sleep log:', [
+                'id' => $id,
+                'original_start' => $request->start_time,
+                'original_end' => $request->end_time,
+                'utc_start' => $data['start_time'] ?? null,
+                'utc_end' => $data['end_time'] ?? null
+            ]);
+
+            $sleepLog->update($data);
+
+            return response()->json($sleepLog);
+        } catch (\Exception $e) {
+            \Log::error('Error updating sleep log: ' . $e->getMessage(), [
+                'id' => $id,
+                'request_data' => $request->all()
+            ]);
+            return response()->json([
+                'error' => 'Failed to update sleep log',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(Request $request, $id)
