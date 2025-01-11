@@ -10,10 +10,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Contracts\Auth\CanResetPassword;
+use App\Traits\HandlesTimezones;
 
 class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HandlesTimezones;
 
     /**
      * The attributes that are mass assignable.
@@ -34,6 +35,8 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         'postal_code',
         'facebook_id',
         'profile_photo',
+        'timezone',
+        'timezone_updated_at'
     ];
 
     /**
@@ -55,6 +58,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'birthday' => 'date',
+        'timezone_updated_at' => 'datetime',
     ];
 
     /**
@@ -74,5 +78,10 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    public function getLocalTimeAttribute()
+    {
+        return $this->getCurrentTime($this->timezone);
     }
 }

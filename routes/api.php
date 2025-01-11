@@ -221,4 +221,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vaccinations/history', [VaccinationController::class, 'getVaccinationHistory']);
     Route::get('/vaccinations/schedule/pdf', [VaccinationController::class, 'generateSchedulePDF']);
 });
+
+// Timezone routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('timezone')->group(function () {
+        Route::get('current', [\App\Http\Controllers\Api\TimezoneController::class, 'current']);
+        Route::post('update', [\App\Http\Controllers\Api\TimezoneController::class, 'update']);
+        Route::post('validate', [\App\Http\Controllers\Api\TimezoneController::class, 'validate_timezone']);
+    });
+});
   
